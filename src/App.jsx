@@ -21,57 +21,45 @@ function App() {
 
   // Fetch real data from Upptime
   useEffect(() => {
-    const fetchUptimeData = async () => {
-      try {
-        setLoading(true);
-        
-        // This will work on Vercel, not on localhost (CORS)
-        const BASE_URL = 'https://raw.githubusercontent.com/MolefiEdward/upptime-monitor/master';
-        
-        // Try to fetch summary data
-        let summaryData = {};
-        let responseTimeData = [];
-        
-        try {
-          const summaryResponse = await fetch(`${BASE_URL}/api/my-app/summary.json`);
-          if (summaryResponse.ok) {
-            summaryData = await summaryResponse.json();
-          }
-        } catch (e) {
-          console.log('Summary fetch failed, using defaults');
-        }
-        
-        try {
-          const historyResponse = await fetch(`${BASE_URL}/api/my-app/response-time.json`);
-          if (historyResponse.ok) {
-            responseTimeData = await historyResponse.json();
-          }
-        } catch (e) {
-          console.log('History fetch failed, using defaults');
-        }
-        
-        // Use real data if available, otherwise keep defaults
-        setUptimeData({
-          status: summaryData?.status || 'operational',
-          uptime: parseFloat(summaryData?.uptime) || 99.98,
-          responseTime: summaryData?.time || 245,
-          lastChecked: new Date(),
-          incidents: summaryData?.dailyMinutesDown ? Object.keys(summaryData.dailyMinutesDown).length : 0,
-          uptimeDay: summaryData?.uptimeDay || '100.00%',
-          uptimeWeek: summaryData?.uptimeWeek || '100.00%',
-          uptimeMonth: summaryData?.uptimeMonth || '100.00%',
-          history: responseTimeData.slice?.(-10) || [240, 235, 258, 245, 267, 230, 242, 255, 238, 246]
-        });
-        
-        setError(null);
-      } catch (error) {
-        console.error('Error fetching uptime data:', error);
-        setError('Using simulated data');
-      } finally {
-        setLoading(false);
-      }
-    };
-
+   const fetchUptimeData = async () => {
+  try {
+    setLoading(true);
+    
+    // Updated BASE_URL with refs/heads/master
+    const BASE_URL = 'https://raw.githubusercontent.com/MolefiEdward/upptime-monitor/refs/heads/master';
+    
+    // Fetch from history folder (this works!)
+    const summaryResponse = await fetch(`${BASE_URL}/history/summary.json`);
+    
+    if (!summaryResponse.ok) {
+      throw new Error(`HTTP ${summaryResponse.status}`);
+    }
+    
+    const summaryData = await summaryResponse.json();
+    const siteData = summaryData[0] || {}; // Your app is the first item
+    
+    console.log('✅ Real data loaded:', siteData);
+    
+    setUptimeData({
+      status: siteData.status || 'operational',
+      uptime: parseFloat(siteData.uptime) || 99.98,
+      responseTime: siteData.time || 245,
+      lastChecked: new Date(),
+      incidents: siteData.dailyMinutesDown ? Object.keys(siteData.dailyMinutesDown).length : 0,
+      uptimeDay: siteData.uptimeDay || '100.00%',
+      uptimeWeek: siteData.uptimeWeek || '100.00%',
+      uptimeMonth: siteData.uptimeMonth || '100.00%',
+      history: [] // You can add response time history later
+    });
+    
+    setError(null);
+  } catch (error) {
+    console.error('Error fetching uptime data:', error);
+    setError('Using simulated data');
+  } finally {
+    setLoading(false);
+  }
+};
     fetchUptimeData();
     
     // Refresh every 5 minutes in production
